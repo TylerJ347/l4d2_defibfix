@@ -36,7 +36,7 @@ DETOUR_DECL_STATIC1(GetPlayerByCharacter, void *, int, charaster)
 		const char* pMinDistPlayerName = NULL;
 		const char* pAnyDeadSurvPlayerName = NULL;
 
-		for (int i = 1; i<= L4D_MAX_PLAYERS; i++)
+		for (int i = 1; i <= L4D_MAX_PLAYERS; i++)
 		{
 			IGamePlayer *player = playerhelpers->GetGamePlayer(i);
 			if (player && player->IsInGame())
@@ -90,7 +90,7 @@ DETOUR_DECL_STATIC1(GetPlayerByCharacter, void *, int, charaster)
 
 DETOUR_DECL_STATIC1(CSurvivorDeathModel__Create, CBaseEntity *, CBasePlayer*, bplayer)
 {
-	edict_t *pEdict=gameents->BaseEntityToEdict((CBaseEntity *)bplayer);
+	edict_t *pEdict=gameents->BaseEntityToEdict((CBaseEntity*)bplayer);
 
 	int client=gamehelpers->IndexOfEdict(pEdict);
 	
@@ -114,7 +114,7 @@ DETOUR_DECL_MEMBER4(DefibrillatorOnStartAction, void *, int,reserved, void*,play
 		for (int i=1; i<=L4D_MAX_PLAYERS; i++)
 		{
 			IGamePlayer *player = playerhelpers->GetGamePlayer(i);
-			if (player &&  player->IsInGame())
+			if (player && player->IsInGame())
 			{
 				IPlayerInfo* info = player->GetPlayerInfo();
 				if(info)

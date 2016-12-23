@@ -1,128 +1,60 @@
-# (C)2004-2009 SourceMod Development Team
-# Makefile written by David "BAILOPAN" Anderson
+# Makefile
+HX_SOURCEMOD = ../sourcemod
+HX_SDKL4D2 = ../hl2sdk
+HX_METAMOD = ../mmsource
+#
+# defibfix.ext.so
+#
+HX_INCLUDE = -I$(HX_SDKL4D2)/public/game/server -I$(HX_SDKL4D2)/common -I$(HX_SDKL4D2)/game/shared -I. -I$(HX_SDKL4D2)/public -I$(HX_SDKL4D2)/public/engine -I$(HX_SDKL4D2)/public/mathlib -I$(HX_SDKL4D2)/public/tier0 -I$(HX_SDKL4D2)/public/tier1 -I$(HX_METAMOD)/core -I$(HX_METAMOD)/core/sourcehook -I$(HX_SOURCEMOD)/public -I$(HX_SOURCEMOD)/public/extensions -I$(HX_SOURCEMOD)/sourcepawn/include
+#
+HX_QWERTY = -D_LINUX \
+	-Dstricmp=strcasecmp \
+	-D_stricmp=strcasecmp \
+	-D_strnicmp=strncasecmp \
+	-Dstrnicmp=strncasecmp \
+	-D_snprintf=snprintf \
+	-D_vsnprintf=vsnprintf \
+	-D_alloca=alloca \
+	-Dstrcmpi=strcasecmp \
+	-Wall \
+	-Werror \
+	-Wno-switch \
+	-Wno-unused \
+	-msse \
+	-DSOURCEMOD_BUILD \
+	-DHAVE_STDINT_H \
+	-m32 \
+	-DNDEBUG \
+	-O2 \
+	-funroll-loops \
+	-pipe \
+	-fno-strict-aliasing \
+	-fvisibility=hidden \
+	-DCOMPILER_GCC \
+	-mfpmath=sse
 
-SMSDK ?= ../sourcemod
-SRCDS_BASE ?= ../../../../../_SDK_PLATFORM/srcds
-HL2SDK ?= ../hl2sdk
-MMSOURCE ?= ../mmsource
-
-ENGINE=left4dead2
-#####################################
-### EDIT BELOW FOR OTHER PROJECTS ###
-#####################################
-
-PROJECT = defibfix
-
-#Uncomment for Metamod: Source enabled extension
-USEMETA = true
-
-OBJECTS = smsdk_ext.cpp CDetour/detours.cpp asm/asm.c extension.cpp
-
-##############################################
-### CONFIGURE ANY OTHER FLAGS/OPTIONS HERE ###
-##############################################
-
-C_OPT_FLAGS = -DNDEBUG -O2 -funroll-loops -pipe -fno-strict-aliasing
-C_DEBUG_FLAGS = -D_DEBUG -DDEBUG -g -ggdb3
-C_GCC4_FLAGS = -fvisibility=hidden
-CPP_GCC4_FLAGS = -fvisibility-inlines-hidden
-CPP = gcc
-
-override ENGSET = false
-
-HL2PUB = $(HL2SDK)/public
-HL2LIB = $(HL2SDK)/lib/linux
-METAMOD = $(MMSOURCE)/core
-CFLAGS += -DSOURCE_ENGINE=9
-INCLUDE += -I$(HL2SDK)/public/game/server -I$(HL2SDK)/common -I$(HL2SDK)/game/shared
-SRCDS = $(SRCDS_BASE)/$(ENGINE)
-
-
-# Check for valid list of engines
-ifneq (,$(filter left4dead2,$(ENGINE)))
-	override ENGSET = true
-endif
-
-
-ifeq "$(USEMETA)" "true"
-	LINK += $(HL2LIB)/tier1_i486.a $(HL2LIB)/mathlib_i486.a libvstdlib_srv.so libtier0_srv.so
-
-	INCLUDE += -I. -I.. -Isdk -I$(HL2PUB) -I$(HL2PUB)/engine -I$(HL2PUB)/mathlib -I$(HL2PUB)/tier0 \
-			-I$(HL2PUB)/tier1 -I$(METAMOD) -I$(METAMOD)/sourcehook -I$(SMSDK)/public -I$(SMSDK)/public/extensions \
-			-I$(SMSDK)/sourcepawn/include
-
-	CFLAGS += -DSE_EPISODEONE=1 -DSE_DARKMESSIAH=2 -DSE_ORANGEBOX=3 -DSE_ORANGEBOXVALVE=4 \
-		-DSE_LEFT4DEAD=5 -DSE_LEFT4DEAD2=6
-else
-	INCLUDE += -I. -I.. -Isdk -I$(SMSDK)/public -I$(SMSDK)/sourcepawn/include
-endif
-
-
-LINK += -m32 -lm -ldl
-
-CFLAGS += -D_LINUX -Dstricmp=strcasecmp -D_stricmp=strcasecmp -D_strnicmp=strncasecmp -Dstrnicmp=strncasecmp \
-	-D_snprintf=snprintf -D_vsnprintf=vsnprintf -D_alloca=alloca -Dstrcmpi=strcasecmp -Wall -Werror -Wno-switch \
-	-Wno-unused -mfpmath=sse -msse -DSOURCEMOD_BUILD -DHAVE_STDINT_H -m32
-CPPFLAGS += -Wno-non-virtual-dtor -fno-exceptions -fno-rtti -std=c++11
-
-################################################
-### DO NOT EDIT BELOW HERE FOR MOST PROJECTS ###
-################################################
-
-ifeq "$(DEBUG)" "true"
-	BIN_DIR = Debug
-	CFLAGS += $(C_DEBUG_FLAGS)
-else
-	BIN_DIR = Release
-	CFLAGS += $(C_OPT_FLAGS)
-endif
-
-ifeq "$(USEMETA)" "true"
-	BIN_DIR := $(BIN_DIR).$(ENGINE)
-endif
-
-OS := $(shell uname -s)
-ifeq "$(OS)" "Darwin"
-	LINK += -dynamiclib
-	BINARY = $(PROJECT).ext.dylib
-else
-	LINK += -static-libgcc -shared
-	BINARY = $(PROJECT).ext.so
-endif
-
-GCC_VERSION := $(shell $(CPP) -dumpversion >&1 | cut -b1)
-ifeq "$(GCC_VERSION)" "4"
-	CFLAGS += $(C_GCC4_FLAGS)
-	CPPFLAGS += $(CPP_GCC4_FLAGS)
-endif
-
-OBJ_LINUX := $(OBJECTS:%.cpp=$(BIN_DIR)/%.o)
-
-$(BIN_DIR)/%.o: %.cpp
-	$(CPP) $(INCLUDE) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
-
-all: check
-	mkdir -p $(BIN_DIR)
-	ln -sf $(SMSDK)/public/smsdk_ext.cpp
-	mkdir -p $(BIN_DIR)/CDetour
-	ln -sf $(HL2SDK)/lib/linux/libvstdlib_srv.so libvstdlib_srv.so;
-	ln -sf $(HL2SDK)/lib/linux/libtier0_srv.so libtier0_srv.so;
-	$(MAKE) -f Makefile extension
-
-check:
-	if [ "$(USEMETA)" = "true" ] && [ "$(ENGSET)" = "false" ]; then \
-		echo "You must supply one of the following values for ENGINE:"; \
-		echo "left4dead2, left4dead, orangeboxvalve, orangebox, or original"; \
-		exit 1; \
-	fi
-
-extension: check $(OBJ_LINUX)
-	$(CPP) $(INCLUDE) $(OBJ_LINUX) $(LINK) -o $(BIN_DIR)/$(BINARY)
-
-debug:
-	$(MAKE) -f Makefile all DEBUG=true
-
-default: all
-
-clean: check
-	rm -rf Debug.*/ Release.*/
+CPP_FLAGS = -Wno-non-virtual-dtor \
+	-fvisibility-inlines-hidden \
+	-fno-exceptions \
+	-fno-rtti \
+	-std=c++11
+#
+HX_SO = l4d2_release/smsdk_ext.o \
+	l4d2_release/detours.o \
+	l4d2_release/extension.o \
+	l4d2_release/asm.o
+#
+all:
+	mkdir -p l4d2_release
+	ln -sf $(HX_SOURCEMOD)/public/smsdk_ext.cpp
+	ln -sf $(HX_SDKL4D2)/lib/linux/libvstdlib_srv.so libvstdlib_srv.so;
+	ln -sf $(HX_SDKL4D2)/lib/linux/libtier0_srv.so libtier0_srv.so;
+#
+	gcc $(HX_INCLUDE) $(HX_QWERTY) $(CPP_FLAGS) -o l4d2_release/smsdk_ext.o -c smsdk_ext.cpp
+	gcc $(HX_INCLUDE) $(HX_QWERTY) $(CPP_FLAGS) -o l4d2_release/detours.o -c CDetour/detours.cpp
+	gcc $(HX_INCLUDE) $(HX_QWERTY) $(CPP_FLAGS) -o l4d2_release/extension.o -c extension.cpp
+	gcc $(HX_INCLUDE) $(HX_QWERTY) -o l4d2_release/asm.o -c asm/asm.c
+#
+	gcc $(HX_SO) $(HX_SDKL4D2)/lib/linux/tier1_i486.a $(HX_SDKL4D2)/lib/linux/mathlib_i486.a libvstdlib_srv.so libtier0_srv.so -static-libgcc -shared -m32 -lm -ldl -o l4d2_release/defibfix.ext.so
+#
+	rm -rf l4d2_release/*.o
